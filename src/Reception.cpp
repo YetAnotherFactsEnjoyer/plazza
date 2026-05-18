@@ -39,14 +39,22 @@ void Reception::run() {
 
 void Reception::handleOrder(const std::string& input) {
   std::vector<Pizza> pizzas = _parser.parseOrder(input);
-  std::cout << "Parsed " << pizzas.size() << " pizza(s): " << std::endl;
 
-  for (const Pizza pizza: pizzas) {
+  std::cout << "Parsed " << pizzas.size() << " pizza(s):" << std::endl;
+
+  for (const Pizza& pizza : pizzas) {
     std::cout << "- "
               << pizza.typeToString()
               << " "
-              << pizza.sizeToString()
-              << std::endl;
+              << pizza.sizeToString();
+
+    if (_stock.hasIngredients(pizza)) {
+      _stock.consumeIngredients(pizza);
+      std::cout << " cooked";
+    } else {
+      std::cout << " waiting: not enough ingredients";
+    }
+    std::cout << std::endl;
   }
 }
 
@@ -55,4 +63,5 @@ void Reception::displayStatus() const {
   std::cout << "- multiplier: " << _multiplier << std::endl;
   std::cout << "- cooks per kitchen: " << _cooksPerKitchen << std::endl;
   std::cout << "- restock time: " << _restockTime << " ms" << std::endl;
+  _stock.display();
 }

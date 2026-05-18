@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Parser.hpp"
+#include "Stock.hpp"
 
 class Reception {
 public:
@@ -16,4 +17,5 @@ private:
   int _cooksPerKitchen;
   int _restockTime;
   Parser _parser;
+  Stock _stock;
 };

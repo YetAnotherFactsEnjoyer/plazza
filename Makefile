@@ -6,6 +6,7 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -Iinclude
 SRC =	src/main.cpp \
 		src/Pizza.cpp \
 		src/Parser.cpp \
+		src/Stock.cpp	\
 		src/Reception.cpp
 
 OBJ = $(SRC:.cpp=.o)
