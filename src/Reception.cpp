@@ -4,7 +4,7 @@
 #include <string>
 
 Reception::Reception(double multiplier, int cooksPerKitchen, int restockTime)
-    : _multiplier(multiplier), _cooksPerKitchen(cooksPerKitchen), _restockTime(restockTime), _kitchen(1, cooksPerKitchen, multiplier, restockTime)
+  : _multiplier(multiplier), _cooksPerKitchen(cooksPerKitchen), _restockTime(restockTime), _kitchenManager(cooksPerKitchen, multiplier, restockTime)
 {
 }
 
@@ -36,29 +36,18 @@ void Reception::run() {
   }
 }
 
-void Reception::handleOrder(const std::string& input)
-{
+void Reception::handleOrder(const std::string& input) {
   std::vector<Pizza> pizzas = _parser.parseOrder(input);
 
   std::cout << "Parsed " << pizzas.size() << " pizza(s)." << std::endl;
 
-  for (const Pizza& pizza : pizzas) {
-    if (!_kitchen.canAcceptPizza()) {
-      std::cout << "No available kitchen for "
-                << pizza.typeToString()
-                << " "
-                << pizza.sizeToString()
-                << std::endl;
-      continue;
-    }
-    _kitchen.addPizza(pizza);
-  }
+  for (const Pizza& pizza : pizzas)
+    _kitchenManager.assignPizza(pizza);
 }
-
 void Reception::displayStatus() const {
   std::cout << "Status:" << std::endl;
   std::cout << "- multiplier: " << _multiplier << std::endl;
   std::cout << "- cooks per kitchen: " << _cooksPerKitchen << std::endl;
   std::cout << "- restock time: " << _restockTime << " ms" << std::endl;
-  _kitchen.displayStatus();
+  _kitchenManager.displayStatus();
 }

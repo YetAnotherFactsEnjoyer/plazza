@@ -10,6 +10,11 @@ public:
   ~Kitchen();
   bool canAcceptPizza() const;
   void addPizza(const Pizza& pizza);
+
+  int getLoad() const;
+  int getCapacity() const;
+  int getId() const;
+
   void displayStatus() const;
 private:
   int getCurrentLoad() const;

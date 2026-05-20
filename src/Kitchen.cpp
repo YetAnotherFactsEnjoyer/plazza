@@ -40,6 +40,17 @@ int Kitchen::getCurrentLoad() const {
   return _threadPool.getBusyCooks() + _threadPool.getWaitingTasks();
 }
 
+int Kitchen::getLoad() const {
+  return getCurrentLoad();
+}
+
+int Kitchen::getCapacity() const {
+  return _maxCapacity;
+}
+
+int Kitchen::getId() const {
+  return _id;
+}
 
 bool Kitchen::canAcceptPizza() const {
   return getCurrentLoad() < _maxCapacity;

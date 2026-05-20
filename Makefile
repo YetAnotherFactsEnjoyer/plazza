@@ -9,6 +9,7 @@ SRC =	src/main.cpp \
 		src/Stock.cpp	\
 		src/Kitchen.cpp	\
 		src/ThreadPool.cpp	\
+		src/KitchenManager.cpp	\
 		src/Reception.cpp
 
 OBJ = $(SRC:.cpp=.o)
