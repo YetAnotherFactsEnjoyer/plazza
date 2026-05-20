@@ -51,7 +51,7 @@ void Reception::handleOrder(const std::string& input) {
 
     Message unpacked = Message::unpack(message.pack());
 
-    _kitchenManager.assignPizza(unpacked.getPizza());
+    _kitchenManager.assignPizzaToProcess(unpacked.getPizza());
   }
 }
 
