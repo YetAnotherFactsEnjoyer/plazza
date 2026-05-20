@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include <sys/wait.h>
-
+#include <cstdlib>
 
 KitchenManager::KitchenManager(int cooksPerKitchen, double multiplier, int restockTime)
   : _cooksPerKitchen(cooksPerKitchen),
@@ -31,12 +31,15 @@ void KitchenManager::createKitchen() {
   std::cout << "Kitchen " << id << " created" << std::endl;
 }
 
-void KitchenManager::forkedKitchenPrototype(const Pizza& pizza)
-{
-  int pipeFd[2];
+void KitchenManager::forkedKitchenPrototype(const Pizza& pizza) {
+  int pipeToChild[2];
+  int pipeToParent[2];
 
-  if (pipe(pipeFd) == -1)
-    throw std::runtime_error("pipe failed");
+  if (pipe(pipeToChild) == -1)
+    throw std::runtime_error("pipe to child failed");
+
+  if (pipe(pipeToParent) == -1)
+    throw std::runtime_error("pipe to parent failed");
 
   pid_t pid = fork();
 
@@ -44,12 +47,14 @@ void KitchenManager::forkedKitchenPrototype(const Pizza& pizza)
     throw std::runtime_error("fork failed");
 
   if (pid == 0) {
-    PipeIPC ipc(pipeFd[0], -1);
+    PipeIPC fromReception(pipeToChild[0], -1);
+    PipeIPC toReception(-1, pipeToParent[1]);
 
-    close(pipeFd[1]);
+    close(pipeToChild[1]);
+    close(pipeToParent[0]);
 
     try {
-      std::string rawMessage = ipc.receive();
+      std::string rawMessage = fromReception.receive();
       Message message = Message::unpack(rawMessage);
 
       if (message.getType() == MessageType::NewPizza && message.hasPizza()) {
@@ -60,18 +65,24 @@ void KitchenManager::forkedKitchenPrototype(const Pizza& pizza)
                   << " "
                   << receivedPizza.sizeToString()
                   << std::endl;
+
+        Message doneMessage(MessageType::PizzaDone, receivedPizza);
+        toReception.send(doneMessage.pack());
       }
     } catch (const std::exception& error) {
       std::cerr << "Forked kitchen error: "
                 << error.what()
                 << std::endl;
     }
+
     std::exit(0);
   }
 
-  PipeIPC ipc(-1, pipeFd[1]);
+  PipeIPC toKitchen(-1, pipeToChild[1]);
+  PipeIPC fromKitchen(pipeToParent[0], -1);
 
-  close(pipeFd[0]);
+  close(pipeToChild[0]);
+  close(pipeToParent[1]);
 
   Message message(MessageType::NewPizza, pizza);
 
@@ -79,7 +90,20 @@ void KitchenManager::forkedKitchenPrototype(const Pizza& pizza)
             << message.pack()
             << std::endl;
 
-  ipc.send(message.pack());
+  toKitchen.send(message.pack());
+
+  std::string rawResponse = fromKitchen.receive();
+  Message response = Message::unpack(rawResponse);
+
+  if (response.getType() == MessageType::PizzaDone && response.hasPizza()) {
+    Pizza donePizza = response.getPizza();
+
+    std::cout << "Reception received done pizza: "
+              << donePizza.typeToString()
+              << " "
+              << donePizza.sizeToString()
+              << std::endl;
+  }
 
   waitpid(pid, nullptr, 0);
 }
