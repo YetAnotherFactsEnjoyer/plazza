@@ -42,17 +42,8 @@ void Reception::handleOrder(const std::string& input) {
 
   std::cout << "Parsed " << pizzas.size() << " pizza(s)." << std::endl;
 
-  for (const Pizza& pizza : pizzas) {
-    Message message(MessageType::NewPizza, pizza);
-
-    std::cout << "Serialized message: "
-              << message.pack()
-              << std::endl;
-
-    Message unpacked = Message::unpack(message.pack());
-
-    _kitchenManager.assignPizzaToProcess(unpacked.getPizza());
-  }
+  for (const Pizza& pizza : pizzas)
+    _kitchenManager.assignPizzaToProcess(pizza);
 }
 
 void Reception::displayStatus() const {

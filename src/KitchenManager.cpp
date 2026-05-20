@@ -1,4 +1,5 @@
 #include "KitchenManager.hpp"
+#include "Kitchen.hpp"
 #include "PipeIPC.hpp"
 #include "Message.hpp"
 
@@ -17,7 +18,17 @@ KitchenManager::KitchenManager(int cooksPerKitchen, double multiplier, int resto
   createKitchen();
 }
 
-static void runKitchenChild(int kitchenId, PipeIPC fromReception, PipeIPC toReception) {
+static void runKitchenChild(
+  int kitchenId,
+  int cooksPerKitchen,
+  double multiplier,
+  int restockTime,
+  PipeIPC fromReception,
+  PipeIPC toReception
+)
+{
+  Kitchen kitchen(kitchenId, cooksPerKitchen, multiplier, restockTime);
+
   while (true) {
     try {
       std::string rawMessage = fromReception.receive();
@@ -33,6 +44,8 @@ static void runKitchenChild(int kitchenId, PipeIPC fromReception, PipeIPC toRece
                   << pizza.sizeToString()
                   << std::endl;
 
+        kitchen.addPizza(pizza);
+
         Message doneMessage(MessageType::PizzaDone, pizza);
         toReception.send(doneMessage.pack());
       }
@@ -44,6 +57,7 @@ static void runKitchenChild(int kitchenId, PipeIPC fromReception, PipeIPC toRece
       break;
     }
   }
+
   std::exit(0);
 }
 
@@ -72,7 +86,14 @@ KitchenProcess& KitchenManager::createKitchenProcess() {
     close(pipeToChild[1]);
     close(pipeToParent[0]);
 
-    runKitchenChild(id, std::move(fromReception), std::move(toReception));
+    runKitchenChild(
+    id,
+    _cooksPerKitchen,
+    _multiplier,
+    _restockTime,
+    std::move(fromReception),
+    std::move(toReception)
+    );
   }
 
   PipeIPC toKitchen(-1, pipeToChild[1]);
