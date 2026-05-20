@@ -13,12 +13,19 @@ public:
   void displayStatus() const;
 private:
   int getCurrentLoad() const;
+  void stockRegenerationLoop();
+
   int _id;
   int _cooksCount;
   double _multiplier;
   int _restockTime;
   int _currentLoad;
   int _maxCapacity;
+
   Stock _stock;
   ThreadPool _threadPool;
+
+  std::thread _stockThread;
+  std::atomic<bool> _running;
+  mutable std::mutex _stockDisplayMutex;
 };

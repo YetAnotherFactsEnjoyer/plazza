@@ -1,6 +1,8 @@
 #include "Kitchen.hpp"
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 #include <stdexcept>
 
 Kitchen::Kitchen(int id, int cooksCount, double multiplier, int restockTime)
@@ -8,14 +10,30 @@ Kitchen::Kitchen(int id, int cooksCount, double multiplier, int restockTime)
     _cooksCount(cooksCount),
     _multiplier(multiplier),
     _restockTime(restockTime),
-    _currentLoad(0),
     _maxCapacity(cooksCount * 2),
-    _threadPool(cooksCount, multiplier, _stock)
+    _stock(),
+    _threadPool(cooksCount, multiplier, _stock),
+    _running(true)
 {
+  _stockThread = std::thread(&Kitchen::stockRegenerationLoop, this);
 }
 
-Kitchen::~Kitchen()
-{
+Kitchen::~Kitchen() {
+  _running = false;
+
+  if (_stockThread.joinable())
+    _stockThread.join();
+}
+
+void Kitchen::stockRegenerationLoop() {
+  while (_running) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(_restockTime));
+
+    if (!_running)
+      break;
+
+    _stock.regenerate();
+  }
 }
 
 int Kitchen::getCurrentLoad() const {
@@ -24,7 +42,7 @@ int Kitchen::getCurrentLoad() const {
 
 
 bool Kitchen::canAcceptPizza() const {
-  return _currentLoad < _maxCapacity;
+  return getCurrentLoad() < _maxCapacity;
 }
 
 void Kitchen::addPizza(const Pizza& pizza) {
