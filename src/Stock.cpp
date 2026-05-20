@@ -53,28 +53,45 @@ std::vector<Ingredient> Stock::getIngredientsForPizza(const Pizza& pizza) const 
   throw std::runtime_error("Unknown pizza type");
 }
 
-bool Stock::hasIngredients(const Pizza& pizza) const {
+bool Stock::hasIngredientsUnlocked(const Pizza& pizza) const {
   std::vector<Ingredient> needed = getIngredientsForPizza(pizza);
 
   for (Ingredient ingredient : needed) {
     auto it = _ingredients.find(ingredient);
-      if (it == _ingredients.end() || it->second <= 0)
-        return false;
+
+    if (it == _ingredients.end() || it->second <= 0)
+      return false;
   }
   return true;
 }
 
-void Stock::consumeIngredients(const Pizza& pizza) {
-  if (!hasIngredients(pizza))
-    throw std::runtime_error("Not enough ingredients");
+bool Stock::hasIngredients(const Pizza& pizza) const {
+  std::lock_guard<std::mutex> lock(_mutex);
+  return hasIngredientsUnlocked(pizza);
+}
+
+bool Stock::tryConsumeIngredients(const Pizza& pizza) {
+  std::lock_guard<std::mutex> lock(_mutex);
+
+  if (!hasIngredientsUnlocked(pizza))
+    return false;
 
   std::vector<Ingredient> needed = getIngredientsForPizza(pizza);
 
   for (Ingredient ingredient : needed)
     _ingredients[ingredient]--;
+
+  return true;
 }
 
-void Stock::regenerate(){
+void Stock::consumeIngredients(const Pizza& pizza) {
+  if (!tryConsumeIngredients(pizza))
+    throw std::runtime_error("Not enough ingredients");
+}
+
+void Stock::regenerate() {
+  std::lock_guard<std::mutex> lock(_mutex);
+
   for (auto& pair : _ingredients)
     pair.second++;
 }
@@ -103,8 +120,9 @@ std::string Stock::ingredientToString(Ingredient ingredient) const {
   return "unknown";
 }
 
-void Stock::display() const
-{
+void Stock::display() const {
+  std::lock_guard<std::mutex> lock(_mutex);
+
   std::cout << "Stock:" << std::endl;
 
   for (const auto& pair : _ingredients) {

@@ -32,10 +32,11 @@ private:
 
     std::vector<std::thread> _workers;
     std::queue<Pizza> _tasks;
+
     mutable std::mutex _queueMutex;
     mutable std::mutex _coutMutex;
     std::condition_variable _condition;
-    mutable std::mutex _stockMutex;
+
     std::atomic<bool> _running;
     std::atomic<int> _busyCooks;
 };

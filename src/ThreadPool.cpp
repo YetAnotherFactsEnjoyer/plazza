@@ -78,20 +78,16 @@ void ThreadPool::workerLoop(int cookId) {
 }
 
 void ThreadPool::cookPizza(int cookId, const Pizza& pizza) {
-  {
-    std::lock_guard<std::mutex> lock(_stockMutex);
-
-    if (!_stock.hasIngredients(pizza)) {
-      safePrint(
-        "Cook " + std::to_string(cookId)
-        + " cannot cook "
-        + pizza.typeToString()
-        + " "
-        + pizza.sizeToString()
-        + ": not enough ingredients"
-      );
-    }
-    _stock.consumeIngredients(pizza);
+  if (!_stock.tryConsumeIngredients(pizza)) {
+    safePrint(
+      "Cook " + std::to_string(cookId)
+      + " cannot cook "
+      + pizza.typeToString()
+      + " "
+      + pizza.sizeToString()
+      + ": not enough ingredients"
+    );
+    return;
   }
 
   safePrint(
