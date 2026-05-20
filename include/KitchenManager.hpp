@@ -10,6 +10,7 @@ class KitchenManager {
 public:
   KitchenManager(int cooksPerKitchen, double multiplier, int restockTime);
 
+  void forkedKitchenPrototype(const Pizza& pizza);
   void assignPizza(const Pizza& pizza);
   void displayStatus() const;
 private:
